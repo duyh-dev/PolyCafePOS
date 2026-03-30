@@ -1,0 +1,79 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/* =========================================================
+   Vintage Nature Coffee Shop Style - Global Theme Overrides 
+   ========================================================= */
+:root {
+  /* Vintage Nature Theme Variables - Reusable Globally */
+  --vintage-bg-page: #F5F2EB;
+  --vintage-bg-card: #FFFFFF;
+  --vintage-text-main: #1D332B;
+  --vintage-text-muted: #5C7065;
+  --vintage-primary: #048C73;
+  --vintage-primary-hover: #036b58;
+  --vintage-border: rgba(4, 140, 115, 0.2);
+  --vintage-wood-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.02' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' fill='%23048C73' opacity='0.03' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Enhancing standard buttons to follow the Vintage Nature style globally */
+.btn-primary {
+  background-color: var(--vintage-primary) !important;
+  border-color: var(--vintage-primary) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 10px rgba(4, 140, 115, 0.15);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--vintage-primary-hover) !important;
+  border-color: var(--vintage-primary-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(4, 140, 115, 0.25);
+}
+
+/* Subtle wood texture on body for non-isolated pages */
+body {
+  background-image: var(--vintage-wood-texture);
+}
+
+/* Card overrides for all standard bootstrap cards */
+.card {
+  border-color: var(--vintage-border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover {
+  border-color: rgba(4, 140, 115, 0.3);
+  box-shadow: 0 8px 25px rgba(4, 140, 115, 0.08);
+}

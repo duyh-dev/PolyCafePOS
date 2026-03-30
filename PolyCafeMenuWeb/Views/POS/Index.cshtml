@@ -1,0 +1,1450 @@
+@{
+    ViewData["Title"] = "Bán hàng";
+    Layout = "~/Views/POS/_Layout.cshtml";
+    var categories = ViewBag.Categories as IEnumerable<PolyCafeMenuWeb.Models.Category> ?? new List<PolyCafeMenuWeb.Models.Category>();
+    var toppings = ViewBag.Toppings as IEnumerable<PolyCafeMenuWeb.Models.Topping> ?? new List<PolyCafeMenuWeb.Models.Topping>();
+}
+
+@section Styles {
+    <style>
+        /* ========================================
+           POS REGISTER — Layout Split
+           ======================================== */
+        .menu-section {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .menu-top {
+            flex-shrink: 0;
+            padding: 1.25rem 1.5rem 0 1.5rem;
+        }
+
+        .menu-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 1.5rem 1.25rem 1.5rem;
+        }
+
+        .cart-section {
+            width: 30%;
+            min-width: 340px;
+            background-color: var(--bg-card);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ========================================
+           SEARCH BAR
+           ======================================== */
+        .search-bar {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.7rem 1rem 0.7rem 2.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            background: var(--bg-card);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-light);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(4, 140, 115, 0.1);
+        }
+
+        .search-bar .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .search-bar .search-clear {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 0.85rem;
+            cursor: pointer;
+            padding: 4px;
+            display: none;
+        }
+
+        .search-bar .search-clear:hover {
+            color: var(--text-muted);
+        }
+
+        /* ========================================
+           CATEGORY PILLS
+           ======================================== */
+        .category-ribbon {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
+            padding-bottom: 8px;
+            margin-bottom: 1.25rem;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-ribbon::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-btn {
+            white-space: nowrap;
+            padding: 0.5rem 1.2rem;
+            border-radius: var(--radius-pill);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .category-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: var(--primary-lighter);
+        }
+
+        .category-btn.active {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
+        /* ========================================
+           DRINK GRID — Clean Cards
+           ======================================== */
+        .drink-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+            gap: 1rem;
+            flex-grow: 1;
+            align-content: start;
+        }
+
+        .drink-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .drink-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 16px rgba(4, 140, 115, 0.1);
+        }
+
+        .drink-img-wrapper {
+            height: 140px;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .drink-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .drink-img-wrapper .placeholder-icon {
+            color: var(--border);
+            font-size: 2.5rem;
+        }
+
+        .drink-details {
+            padding: 0.85rem;
+        }
+
+        .drink-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .drink-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drink-price {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        /* Quick Add Button */
+        .btn-quick-add {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--bg-card);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+
+        .btn-quick-add:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #FFFFFF;
+        }
+
+        /* No results */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .no-results i {
+            font-size: 2.5rem;
+            color: var(--border);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* ========================================
+           CART SECTION
+           ======================================== */
+        .cart-header {
+            padding: 1.25rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-header h5 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .cart-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: var(--radius-pill);
+        }
+
+        .cart-body {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem 1.25rem;
+        }
+
+        /* Empty Cart */
+        .empty-cart {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-cart-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .empty-cart-icon i {
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+
+        .empty-cart h6 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.35rem;
+        }
+
+        .empty-cart p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin: 0;
+        }
+
+        /* Cart Item */
+        .cart-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            position: relative;
+        }
+
+        .cart-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            padding-right: 8px;
+            line-height: 1.3;
+        }
+
+        .cart-item-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .cart-item-toppings {
+            font-size: 0.78rem;
+            color: var(--primary);
+            margin-top: 3px;
+        }
+
+        .cart-item-remove {
+            color: var(--text-light);
+            background: none;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            transition: color 0.2s;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+
+        .cart-item-remove:hover {
+            color: var(--danger);
+        }
+
+        .cart-item-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.6rem;
+        }
+
+        /* Quantity Controls — touch-friendly */
+        .cart-qty-ctrl {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .qty-btn {
+            background: var(--bg-main);
+            border: none;
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .qty-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .qty-btn:active {
+            background: var(--primary);
+            color: #FFFFFF;
+        }
+
+        .qty-input {
+            width: 36px;
+            height: 36px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .cart-item-price {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+
+        /* Cart Footer */
+        .cart-footer {
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+        }
+
+        .cart-summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .cart-total-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .cart-total-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .btn-checkout {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-clear-cart {
+            width: 100%;
+            padding: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .btn-clear-cart:hover {
+            color: var(--danger);
+            background: var(--danger-bg);
+        }
+
+        /* ========================================
+           ADD TO CART MODAL
+           ======================================== */
+        .variant-radio { display: none; }
+
+        .variant-label {
+            display: block;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            background: var(--bg-card);
+        }
+
+        .variant-label .size-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .variant-label .size-price {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .variant-radio:checked + .variant-label {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .variant-radio:checked + .variant-label .size-name {
+            color: var(--primary);
+        }
+
+        .variant-radio:checked + .variant-label .size-price {
+            color: var(--primary-dark);
+        }
+
+        /* Topping items */
+        .topping-checkbox { display: none; }
+
+        .topping-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            background: var(--bg-card);
+            font-weight: 500;
+            color: var(--text-main);
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .topping-label:hover {
+            border-color: var(--primary);
+        }
+
+        .topping-label .topping-price {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .topping-checkbox:checked + .topping-label {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+        }
+
+        .topping-checkbox:checked + .topping-label .topping-price {
+            color: var(--primary);
+        }
+
+        /* ========================================
+           CHECKOUT MODAL
+           ======================================== */
+        .checkout-total-box {
+            text-align: center;
+            padding: 1.25rem;
+            background: var(--primary-light);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(4, 140, 115, 0.12);
+        }
+
+        .checkout-total-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .checkout-total-amount {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        #cashReceived {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main) !important;
+            border: 2px solid var(--border) !important;
+            font-size: 1.4rem !important;
+            font-weight: 700 !important;
+            padding: 0.75rem 1rem !important;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #cashReceived:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(4, 140, 115, 0.15) !important;
+        }
+
+        .cash-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .cash-preset-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .cash-preset-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-lighter);
+        }
+
+        .cash-preset-btn:active {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
+        .change-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-md);
+            margin-top: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .change-box.sufficient {
+            background: var(--success-bg);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .change-box.insufficient {
+            background: var(--danger-bg);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .change-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .change-box.sufficient .change-label {
+            color: var(--success);
+        }
+
+        .change-box.insufficient .change-label {
+            color: var(--danger);
+        }
+
+        .change-amount {
+            font-weight: 800;
+            font-size: 1.25rem;
+        }
+
+        .change-box.sufficient .change-amount {
+            color: var(--success);
+        }
+
+        .change-box.insufficient .change-amount {
+            color: var(--danger);
+        }
+
+        .btn-confirm-payment {
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+        }
+
+        /* ========================================
+           LOADING SPINNER
+           ======================================== */
+        .loading-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--text-light);
+        }
+
+        .loading-state .spinner-border {
+            width: 2rem;
+            height: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+
+        /* ========================================
+           ORDER SUCCESS TOAST
+           ======================================== */
+        .toast-success {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            background: var(--bg-card);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toastSlideIn 0.3s ease-out;
+        }
+
+        .toast-success .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--success-bg);
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-success .toast-text strong {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+
+        .toast-success .toast-text span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        @@keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @@keyframes toastSlideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+}
+
+<!-- ==========================================
+     LEFT: MENU SECTION (70%)
+     ========================================== -->
+<div class="menu-section">
+    <!-- Search Bar + Category (fixed, không scroll) -->
+    <div class="menu-top">
+        <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Tìm món / đồ uống..." oninput="filterDrinks()" />
+            <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="category-ribbon" id="categoryRibbon">
+            <button class="category-btn active" onclick="loadDrinks(null, this)">Tất cả</button>
+            @foreach (var cat in categories)
+            {
+                <button class="category-btn" onclick="loadDrinks(@cat.CategoryID, this)">@cat.CategoryName</button>
+            }
+        </div>
+    </div>
+
+    <!-- Drink List (scroll riêng) -->
+    <div class="menu-scroll">
+        <div class="drink-grid" id="drinksContainer">
+            <div class="loading-state">
+                <div class="spinner-border" role="status"></div>
+                <p>Đang tải menu...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     RIGHT: CART SECTION (30%)
+     ========================================== -->
+<div class="cart-section">
+    <div class="cart-header">
+        <h5><i class="fa-solid fa-bag-shopping me-2" style="color: var(--primary);"></i>Đơn hàng</h5>
+        <span class="cart-badge" id="cartItemCount">0 món</span>
+    </div>
+
+    <div class="cart-body" id="cartItemsContainer">
+        <!-- Empty Cart State -->
+        <div id="emptyCartState" class="empty-cart">
+            <div class="empty-cart-icon">
+                <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <h6>Chưa có món nào</h6>
+            <p>Chọn món từ menu để bắt đầu</p>
+        </div>
+    </div>
+
+    <div class="cart-footer">
+        <div class="cart-summary-row">
+            <span>Tạm tính</span>
+            <span id="cartSubtotal">0 ₫</span>
+        </div>
+        <div class="cart-summary-row">
+            <span>Thuế (đã bao gồm)</span>
+            <span>0 ₫</span>
+        </div>
+        <div class="cart-total-row">
+            <span class="cart-total-label">Tổng cộng</span>
+            <span class="cart-total-value" id="cartTotal">0 ₫</span>
+        </div>
+        <button class="btn btn-primary btn-checkout" id="btnCheckout" disabled onclick="openCheckoutModal()">
+            <i class="fa-solid fa-credit-card me-2"></i>Thanh toán
+        </button>
+        <button class="btn-clear-cart" onclick="clearCart()">
+            <i class="fa-solid fa-trash-can me-1"></i>Xoá đơn hàng
+        </button>
+    </div>
+</div>
+
+<!-- ==========================================
+     MODAL: ADD TO CART (Size + Toppings)
+     ========================================== -->
+<div class="modal fade" id="addToCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content pos-modal">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="itemTitle">Tên món</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Size Selection -->
+                <div class="p-3 border-bottom" style="border-color: var(--border) !important;">
+                    <h6 class="mb-3" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em;">
+                        <i class="fa-solid fa-ruler me-1"></i>Chọn size
+                    </h6>
+                    <div class="row gx-2" id="sizeOptions">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Toppings Selection -->
+                <div class="p-3">
+                    <h6 class="mb-3" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em;">
+                        <i class="fa-solid fa-plus me-1"></i>Topping thêm
+                    </h6>
+                    <div id="toppingOptions">
+                        @foreach(var t in toppings)
+                        {
+                            <div class="topping-item">
+                                <input type="checkbox" class="topping-checkbox" id="top_@t.ToppingID" value="@t.ToppingID" data-price="@t.ExtraPrice" onchange="updateItemTotal()">
+                                <label class="topping-label" for="top_@t.ToppingID">
+                                    <span>@t.ToppingName</span>
+                                    <span class="topping-price">+@String.Format("{0:N0}", t.ExtraPrice)₫</span>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" id="itemTotalCalculated">0 ₫</div>
+                <button type="button" class="btn btn-primary px-4 py-2 fw-bold" onclick="addCurrentItemToCart()">
+                    <i class="fa-solid fa-cart-plus me-1"></i>Thêm vào đơn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     MODAL: CHECKOUT (Payment)
+     ========================================== -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content pos-modal p-1">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-money-bill-wave me-2" style="color: var(--success);"></i>Thanh toán
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Total Display -->
+                <div class="checkout-total-box">
+                    <div class="checkout-total-label">Tổng tiền cần thanh toán</div>
+                    <div class="checkout-total-amount" id="checkoutTotalDisplay">0 ₫</div>
+                </div>
+
+                <!-- Cash Input -->
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Tiền khách đưa</label>
+                    <input type="number" class="form-control form-control-lg" id="cashReceived" oninput="calculateChange()" placeholder="Nhập số tiền...">
+                </div>
+
+                <!-- Preset Buttons -->
+                <div class="cash-preset-grid">
+                    <button class="cash-preset-btn" onclick="setCash(50000)">50.000</button>
+                    <button class="cash-preset-btn" onclick="setCash(100000)">100.000</button>
+                    <button class="cash-preset-btn" onclick="setCash(200000)">200.000</button>
+                    <button class="cash-preset-btn" onclick="setCash(500000)">500.000</button>
+                    <button class="cash-preset-btn" onclick="setExactCash()">Đúng tiền</button>
+                    <button class="cash-preset-btn" onclick="setCash(0)">Xoá</button>
+                </div>
+
+                <!-- Change Display -->
+                <div class="change-box insufficient" id="changeContainer">
+                    <span class="change-label">Tiền thừa</span>
+                    <span class="change-amount" id="changeAmountDisplay">0 ₫</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-confirm-payment" id="btnConfirmPayment" disabled onclick="submitOrder()">
+                    <i class="fa-solid fa-check-circle me-2"></i>Xác nhận thanh toán
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ========================================
+        // GLOBAL STATE
+        // ========================================
+        let allDrinks = [];
+        let cart = [];
+        let cartTotalValue = 0;
+        let currentDrink = null;
+        let selectedVariantPrice = 0;
+
+        $(document).ready(function () {
+            loadDrinks();
+        });
+
+        // ========================================
+        // DATA LOADING
+        // ========================================
+        function loadDrinks(categoryId = null, btnObj = null) {
+            if (btnObj) {
+                $('.category-btn').removeClass('active');
+                $(btnObj).addClass('active');
+            }
+
+            // Clear search when switching category
+            clearSearch();
+
+            let url = '/POS/GetDrinks';
+            if (categoryId) url += '?categoryId=' + categoryId;
+
+            $.get(url, function (data) {
+                allDrinks = data;
+                renderDrinkGrid(data);
+            });
+        }
+
+        // ========================================
+        // SEARCH / FILTER (Frontend only)
+        // ========================================
+        function filterDrinks() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const clearBtn = document.getElementById('searchClearBtn');
+
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+
+            if (query.length === 0) {
+                renderDrinkGrid(allDrinks);
+                return;
+            }
+
+            const filtered = allDrinks.filter(d =>
+                d.drinkName.toLowerCase().includes(query)
+            );
+            renderDrinkGrid(filtered);
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            document.getElementById('searchClearBtn').style.display = 'none';
+            renderDrinkGrid(allDrinks);
+        }
+
+        // ========================================
+        // RENDER DRINK GRID
+        // ========================================
+        function renderDrinkGrid(drinks) {
+            const container = document.getElementById('drinksContainer');
+            container.innerHTML = '';
+
+            if (drinks.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <i class="fa-solid fa-mug-saucer"></i>
+                        <p style="font-weight:600;">Không tìm thấy món</p>
+                        <small>Thử tìm kiếm với từ khoá khác</small>
+                    </div>`;
+                return;
+            }
+
+            drinks.forEach(drink => {
+                let basePriceStr = "N/A";
+                let basePrice = 0;
+                if (drink.variants && drink.variants.length > 0) {
+                    basePrice = Math.min(...drink.variants.map(v => v.price));
+                    basePriceStr = basePrice.toLocaleString('vi-VN') + "₫";
+                }
+
+                let imgSrc = drink.imageUrl || '';
+
+                let imgHtml = imgSrc
+                    ? `<img src="${imgSrc}" alt="${drink.drinkName}">`
+                    : `<i class="fa-solid fa-mug-hot placeholder-icon"></i>`;
+
+                const cardHtml = `
+                    <div class="drink-card" onclick='openDrinkOptions(${JSON.stringify(drink).replace(/'/g, "&apos;")})'>
+                        <div class="drink-img-wrapper">
+                            ${imgHtml}
+                        </div>
+                        <div class="drink-details">
+                            <div class="drink-title" title="${drink.drinkName}">${drink.drinkName}</div>
+                            <div class="drink-price-row">
+                                <span class="drink-price">${basePriceStr}</span>
+                                <button class="btn-quick-add" onclick="event.stopPropagation(); quickAdd(${JSON.stringify(drink).replace(/'/g, "&apos;")})" title="Thêm nhanh">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        // ========================================
+        // QUICK ADD — add cheapest variant directly
+        // ========================================
+        function quickAdd(drinkRaw) {
+            const drink = typeof drinkRaw === 'string' ? JSON.parse(drinkRaw) : drinkRaw;
+
+            if (!drink.variants || drink.variants.length === 0) {
+                openDrinkOptions(drink);
+                return;
+            }
+
+            // If only 1 variant and no toppings needed, add directly
+            if (drink.variants.length === 1) {
+                const v = drink.variants[0];
+                addDirectToCart(drink, v.variantID, v.sizeName, v.price);
+                return;
+            }
+
+            // Multiple variants — open modal for selection
+            openDrinkOptions(drink);
+        }
+
+        function addDirectToCart(drink, variantId, variantName, variantPrice) {
+            const signature = `${drink.drinkID}_${variantId}_`;
+            const existingItem = cart.find(i => i.signature === signature);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+                existingItem.subTotal = existingItem.quantity * existingItem.unitPrice;
+            } else {
+                cart.push({
+                    signature: signature,
+                    drinkID: drink.drinkID,
+                    drinkName: drink.drinkName,
+                    variantID: variantId,
+                    sizeName: variantName,
+                    toppings: [],
+                    toppingNames: [],
+                    quantity: 1,
+                    unitPrice: variantPrice,
+                    subTotal: variantPrice
+                });
+            }
+            renderCart();
+            showQuickToast(drink.drinkName);
+        }
+
+        // ========================================
+        // DRINK SELECTION — Open Modal
+        // ========================================
+        function openDrinkOptions(drinkRaw) {
+            currentDrink = typeof drinkRaw === 'string' ? JSON.parse(drinkRaw) : drinkRaw;
+
+            if (!currentDrink.variants || currentDrink.variants.length === 0) {
+                alert("Món này chưa được cấu hình size/giá.");
+                return;
+            }
+
+            document.getElementById('itemTitle').innerText = currentDrink.drinkName;
+
+            const sizeContainer = document.getElementById('sizeOptions');
+            sizeContainer.innerHTML = '';
+
+            const sortedVariants = currentDrink.variants.sort((a, b) => a.price - b.price);
+
+            sortedVariants.forEach((v, index) => {
+                const checked = index === 0 ? 'checked' : '';
+                sizeContainer.innerHTML += `
+                    <div class="col-4">
+                        <input type="radio" class="variant-radio" name="selectedVariant" id="var_${v.variantID}"
+                            value="${v.variantID}" data-price="${v.price}" data-name="${v.sizeName}" ${checked} onchange="updateItemTotal()">
+                        <label class="variant-label" for="var_${v.variantID}">
+                            <span class="size-name">${v.sizeName}</span>
+                            <span class="size-price">${v.price.toLocaleString('vi-VN')}₫</span>
+                        </label>
+                    </div>
+                `;
+            });
+
+            // Reset toppings
+            $('.topping-checkbox').prop('checked', false);
+            updateItemTotal();
+
+            var modal = new bootstrap.Modal(document.getElementById('addToCartModal'));
+            modal.show();
+        }
+
+        function updateItemTotal() {
+            const selectedVar = $('input[name="selectedVariant"]:checked');
+            selectedVariantPrice = selectedVar.length ? parseFloat(selectedVar.data('price')) : 0;
+
+            let toppingsTotal = 0;
+            $('.topping-checkbox:checked').each(function () {
+                toppingsTotal += parseFloat($(this).data('price'));
+            });
+
+            const total = selectedVariantPrice + toppingsTotal;
+            document.getElementById('itemTotalCalculated').innerText = total.toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function addCurrentItemToCart() {
+            const selectedVar = $('input[name="selectedVariant"]:checked');
+            if (selectedVar.length === 0) return;
+
+            const variantId = parseInt(selectedVar.val());
+            const variantName = selectedVar.data('name');
+            const variantPrice = parseFloat(selectedVar.data('price'));
+
+            const toppingIds = [];
+            const toppingNames = [];
+            let toppingsPrice = 0;
+
+            $('.topping-checkbox:checked').each(function () {
+                toppingIds.push(parseInt($(this).val()));
+                toppingNames.push($(this).next('label').find('span:first').text());
+                toppingsPrice += parseFloat($(this).data('price'));
+            });
+
+            const signature = `${currentDrink.drinkID}_${variantId}_${toppingIds.sort().join('-')}`;
+            const unitPriceWithToppings = variantPrice + toppingsPrice;
+
+            const existingItem = cart.find(i => i.signature === signature);
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+                existingItem.subTotal = existingItem.quantity * unitPriceWithToppings;
+            } else {
+                cart.push({
+                    signature: signature,
+                    drinkID: currentDrink.drinkID,
+                    drinkName: currentDrink.drinkName,
+                    variantID: variantId,
+                    sizeName: variantName,
+                    toppings: toppingIds,
+                    toppingNames: toppingNames,
+                    quantity: 1,
+                    unitPrice: unitPriceWithToppings,
+                    subTotal: unitPriceWithToppings
+                });
+            }
+
+            renderCart();
+
+            var modal = bootstrap.Modal.getInstance(document.getElementById('addToCartModal'));
+            modal.hide();
+        }
+
+        // ========================================
+        // CART MANAGEMENT
+        // ========================================
+        function renderCart() {
+            const container = document.getElementById('cartItemsContainer');
+            const emptyState = document.getElementById('emptyCartState');
+
+            cartTotalValue = 0;
+            let totalItemsCount = 0;
+
+            // Remove existing cart items
+            $('.cart-item').remove();
+
+            if (cart.length === 0) {
+                emptyState.style.display = 'flex';
+                document.getElementById('btnCheckout').disabled = true;
+            } else {
+                emptyState.style.display = 'none';
+                document.getElementById('btnCheckout').disabled = false;
+
+                cart.forEach((item, index) => {
+                    cartTotalValue += item.subTotal;
+                    totalItemsCount += item.quantity;
+
+                    let toppingStr = item.toppingNames.length > 0
+                        ? `<div class="cart-item-toppings">+ ${item.toppingNames.join(', ')}</div>`
+                        : '';
+
+                    const html = `
+                        <div class="cart-item">
+                            <div class="cart-item-top">
+                                <div>
+                                    <div class="cart-item-title">${item.drinkName}</div>
+                                    <div class="cart-item-subtitle">Size ${item.sizeName} · ${item.unitPrice.toLocaleString('vi-VN')}₫</div>
+                                    ${toppingStr}
+                                </div>
+                                <button class="cart-item-remove" onclick="removeCartItem(${index})" title="Xoá">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                            <div class="cart-item-bottom">
+                                <div class="cart-qty-ctrl">
+                                    <button class="qty-btn" onclick="updateQty(${index}, -1)"><i class="fa-solid fa-minus"></i></button>
+                                    <input type="text" class="qty-input" value="${item.quantity}" readonly />
+                                    <button class="qty-btn" onclick="updateQty(${index}, 1)"><i class="fa-solid fa-plus"></i></button>
+                                </div>
+                                <div class="cart-item-price">${item.subTotal.toLocaleString('vi-VN')}₫</div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            document.getElementById('cartItemCount').innerText = `${totalItemsCount} món`;
+            document.getElementById('cartSubtotal').innerText = cartTotalValue.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('cartTotal').innerText = cartTotalValue.toLocaleString('vi-VN') + ' ₫';
+        }
+
+        function updateQty(index, delta) {
+            const item = cart[index];
+            item.quantity += delta;
+
+            if (item.quantity <= 0) {
+                cart.splice(index, 1);
+            } else {
+                item.subTotal = item.quantity * item.unitPrice;
+            }
+            renderCart();
+        }
+
+        function removeCartItem(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function clearCart() {
+            if (cart.length > 0 && confirm("Xoá toàn bộ đơn hàng?")) {
+                cart = [];
+                renderCart();
+            }
+        }
+
+        // ========================================
+        // CHECKOUT WORKFLOW
+        // ========================================
+        function openCheckoutModal() {
+            if (cartTotalValue <= 0) return;
+
+            document.getElementById('checkoutTotalDisplay').innerText = cartTotalValue.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('cashReceived').value = '';
+            document.getElementById('changeAmountDisplay').innerText = '0 ₫';
+
+            const changeBox = document.getElementById('changeContainer');
+            changeBox.className = 'change-box insufficient';
+
+            document.getElementById('btnConfirmPayment').disabled = true;
+
+            var modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+            modal.show();
+
+            setTimeout(() => document.getElementById('cashReceived').focus(), 500);
+        }
+
+        function setCash(amount) {
+            document.getElementById('cashReceived').value = amount;
+            calculateChange();
+        }
+
+        function setExactCash() {
+            document.getElementById('cashReceived').value = cartTotalValue;
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const cashVal = document.getElementById('cashReceived').value;
+            const cash = cashVal ? parseFloat(cashVal) : 0;
+            const change = cash - cartTotalValue;
+
+            const changeEl = document.getElementById('changeAmountDisplay');
+            const changeBox = document.getElementById('changeContainer');
+            const btnConfirm = document.getElementById('btnConfirmPayment');
+
+            changeEl.innerText = change.toLocaleString('vi-VN') + ' ₫';
+
+            if (change >= 0) {
+                changeBox.className = 'change-box sufficient';
+                btnConfirm.disabled = false;
+            } else {
+                changeBox.className = 'change-box insufficient';
+                btnConfirm.disabled = true;
+            }
+        }
+
+        function submitOrder() {
+            const btnConfirm = document.getElementById('btnConfirmPayment');
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang xử lý...';
+
+            const requestData = {
+                TotalAmount: cartTotalValue,
+                CashGiven: parseFloat(document.getElementById('cashReceived').value),
+                Note: "",
+                Items: cart.map(c => ({
+                    DrinkID: c.drinkID,
+                    VariantID: c.variantID,
+                    Quantity: c.quantity,
+                    Toppings: c.toppings
+                }))
+            };
+
+            $.ajax({
+                url: '/POS/Checkout',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function (response) {
+                    if (response.success) {
+                        // Show success toast instead of alert
+                        showSuccessToast(response.orderCode);
+                        cart = [];
+                        renderCart();
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('checkoutModal'));
+                        modal.hide();
+                    } else {
+                        alert('Lỗi xử lý đơn hàng: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('Lỗi kết nối mạng. Không thể liên lạc với máy chủ.');
+                },
+                complete: function () {
+                    btnConfirm.innerHTML = '<i class="fa-solid fa-check-circle me-2"></i>Xác nhận thanh toán';
+                    btnConfirm.disabled = false;
+                }
+            });
+        }
+
+        // ========================================
+        // TOAST NOTIFICATIONS
+        // ========================================
+        function showQuickToast(drinkName) {
+            showToastMessage(`Đã thêm ${drinkName}`, 'vào đơn hàng');
+        }
+
+        function showSuccessToast(orderCode) {
+            showToastMessage(`Đơn hàng ${orderCode} đã tạo thành công!`, 'Đã gửi đến barista');
+        }
+
+        // ========================================
+        // CATEGORY RIBBON — Horizontal scroll with mouse wheel
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function () {
+            const ribbon = document.querySelector('.category-ribbon');
+            if (ribbon) {
+                ribbon.addEventListener('wheel', function (e) {
+                    // Chỉ chặn nếu ribbon có thể cuộn ngang
+                    if (ribbon.scrollWidth > ribbon.clientWidth) {
+                        e.preventDefault();
+                        ribbon.scrollBy({
+                            left: e.deltaY * 2,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, { passive: false });
+            }
+        });
+
+        function showToastMessage(title, subtitle) {
+            // Remove existing toast
+            $('.toast-success').remove();
+
+            const toast = `
+                <div class="toast-success" id="toastNotify">
+                    <div class="toast-icon"><i class="fa-solid fa-check"></i></div>
+                    <div class="toast-text">
+                        <strong>${title}</strong>
+                        <span>${subtitle}</span>
+                    </div>
+                </div>
+            `;
+            $('body').append(toast);
+
+            setTimeout(() => {
+                const el = document.getElementById('toastNotify');
+                if (el) {
+                    el.style.animation = 'toastSlideOut 0.3s ease-in forwards';
+                    setTimeout(() => el.remove(), 300);
+                }
+            }, 2500);
+        }
+    </script>
+}

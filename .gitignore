@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+err.txt
+errors.txt
+build_output.txt
+build_output.log
+build_last.log
+msbuild.log
+
+# Local tooling
+.dotnet/

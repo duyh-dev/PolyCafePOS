@@ -1,0 +1,163 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Manager/_Layout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="glass-card stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="stat-details">
+                <h4>Today's Revenue</h4>
+                <p>@String.Format("{0:N0}", ViewBag.TodayRevenue)₫</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-card stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="stat-details">
+                <h4>Monthly Revenue</h4>
+                <p>@String.Format("{0:N0}", ViewBag.MonthRevenue)₫</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-card stat-card">
+            <div class="stat-icon orange"><i class="fa-solid fa-receipt"></i></div>
+            <div class="stat-details">
+                <h4>Today's Orders</h4>
+                <p>@ViewBag.TotalOrdersToday</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="glass-card stat-card">
+            <div class="stat-icon purple"><i class="fa-solid fa-coffee"></i></div>
+            <div class="stat-details">
+                <h4>Total Drinks</h4>
+                <p>@ViewBag.TotalDrinks</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0 font-weight-bold">Revenue Overview (Last 7 Days)</h5>
+            </div>
+            <div style="height: 350px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="glass-card h-100">
+            <h5 class="mb-4">Quick Actions</h5>
+            <div class="d-grid gap-3">
+                <a href="~/Manager/Drinks" class="btn btn-outline-primary text-start py-3 rounded-3" style="border-color: rgba(59,130,246,0.3); color: #94a3b8;">
+                    <i class="fa-solid fa-plus text-primary me-2"></i> Add New Drink
+                </a>
+                <a href="~/Manager/Employees" class="btn btn-outline-primary text-start py-3 rounded-3" style="border-color: rgba(59,130,246,0.3); color: #94a3b8;">
+                    <i class="fa-solid fa-user-plus text-primary me-2"></i> Add Employee
+                </a>
+                <a href="~/Manager/Reports" class="btn btn-outline-primary text-start py-3 rounded-3" style="border-color: rgba(59,130,246,0.3); color: #94a3b8;">
+                    <i class="fa-solid fa-download text-primary me-2"></i> Export Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            var rawChartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartData));
+            
+            var labels = rawChartData.map(item => item.Date);
+            var data = rawChartData.map(item => item.Revenue);
+
+            var ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            // Create gradient
+            var gradient = ctx.createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(46, 125, 50, 0.4)'); /* Green gradient */
+            gradient.addColorStop(1, 'rgba(46, 125, 50, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue (VND)',
+                        data: data,
+                        backgroundColor: gradient,
+                        borderColor: '#2E7D32', /* Primary Green */
+                        borderWidth: 3,
+                        pointBackgroundColor: '#FFFFFF',
+                        pointBorderColor: '#2E7D32',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937', /* Dark gray tooltip */
+                            titleColor: '#E5E7EB',
+                            bodyColor: '#fff',
+                            bodyFont: { weight: 'bold' },
+                            padding: 12,
+                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString() + ' ₫';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)', /* Subtle dark grid line for light mode */
+                                borderColor: 'transparent'
+                            },
+                            ticks: {
+                                color: '#6B7280' /* Muted Gray */
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                borderColor: 'transparent'
+                            },
+                            ticks: {
+                                color: '#6B7280',
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000) + 'M';
+                                    } else if (value >= 1000) {
+                                        return (value / 1000) + 'K';
+                                    }
+                                    return value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

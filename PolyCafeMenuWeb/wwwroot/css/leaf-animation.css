@@ -1,0 +1,60 @@
+/* ========================================
+   FALLING LEAVES — Decorative Background
+   Organic / Cafe / Natural ambiance
+   ======================================== */
+
+.leaf-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999;
+    overflow: hidden;
+}
+
+.leaf {
+    position: absolute;
+    top: -60px;
+    will-change: transform, opacity;
+    animation: leafFall var(--fall-duration, 12s) linear infinite,
+               leafSway var(--sway-duration, 4s) ease-in-out infinite alternate;
+    animation-delay: var(--fall-delay, 0s), var(--sway-delay, 0s);
+    opacity: var(--leaf-opacity, 0.18);
+}
+
+/* SVG leaf shape via inline background — simple, elegant vector leaf */
+.leaf svg {
+    display: block;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* ========== FALL ANIMATION ========== */
+@keyframes leafFall {
+    0% {
+        top: -80px;
+        transform: rotate(var(--start-rotate, 0deg)) scale(var(--leaf-scale, 1));
+    }
+    100% {
+        top: 110vh;
+        transform: rotate(var(--end-rotate, 360deg)) scale(var(--leaf-scale, 1));
+    }
+}
+
+/* ========== SWAY ANIMATION — gentle wind ========== */
+@keyframes leafSway {
+    0% {
+        margin-left: 0px;
+    }
+    100% {
+        margin-left: var(--sway-amount, 40px);
+    }
+}
+
+/* ========== REDUCED MOTION PREFERENCE ========== */
+@media (prefers-reduced-motion: reduce) {
+    .leaf-background {
+        display: none;
+    }
+}

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PolyCafe Manager</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/leaf-animation.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #F4F6F8; /* Clean light gray backgorund for the whole app */
+            --bg-card: #FFFFFF; /* Pure white content panels */
+            --text-main: #1F2937; /* Dark gray for high readability */
+            --text-muted: #6B7280; /* Muted gray for secondary text */
+            --accent-primary: #2E7D32; /* Management Green */
+            --accent-hover: #1B5E20; /* Darker green for hover */
+            --sidebar-width: 260px;
+            --border-color: #E5E7EB; /* Subtle borders */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+        }
+
+        /* Override Bootstrap dark text classes forcefully since child views used them for dark mode */
+        .text-white:not(.badge) { color: var(--text-main) !important; }
+        .text-light { color: var(--text-muted) !important; }
+        .border-light { border-color: var(--border-color) !important; }
+        .bg-dark { background-color: #F8FAFC !important; color: var(--text-main) !important; }
+        .text-muted { color: var(--text-muted) !important; }
+        .btn.bg-transparent { color: var(--text-muted) !important; }
+        .btn.bg-transparent:hover { background-color: #E5E7EB !important; color: var(--text-main) !important; }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #FFFFFF;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.02);
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-brand h3 {
+            margin: 0;
+            font-weight: 800;
+            color: var(--accent-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-menu {
+            padding: 1.5rem 0;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.2rem;
+            color: var(--text-muted);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .nav-link i {
+            width: 24px;
+            margin-right: 10px;
+            font-size: 1.1rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: #F3F4F6;
+            color: var(--text-main);
+        }
+
+        .nav-link.active {
+            color: var(--accent-primary);
+            background-color: rgba(46, 125, 50, 0.08); /* Light green bg */
+        }
+
+        .nav-link.active i {
+            color: var(--accent-primary);
+        }
+
+        .user-profile {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: #FAFAFA;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--accent-primary);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 2.5rem 3rem;
+            min-height: 100vh;
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        /* Clean White Cards (replaces glass-card) */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Stat Cards */
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            padding: 1.5rem;
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Mapping stat icons to softer management colors */
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: #2563EB; }
+        .stat-icon.green { background: rgba(46, 125, 50, 0.1); color: var(--accent-primary); }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.1); color: #7C3AED; }
+        .stat-icon.orange { background: rgba(245, 158, 11, 0.1); color: #D97706; }
+
+        .stat-details h4 {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-details p {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        /* Tables improvements */
+        .table {
+            color: var(--text-main);
+            vertical-align: middle;
+            margin-bottom: 0;
+        }
+
+        .table > :not(caption) > * > * {
+            background-color: transparent;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.2rem 1rem;
+        }
+
+        /* Table hover state */
+        .table-hover tbody tr:hover * {
+            background-color: #F9FAFB !important; /* Very subtle hover */
+        }
+
+        .table thead th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        
+        .fw-bold { font-weight: 600 !important; }
+
+        /* Modals and Forms */
+        .modal-content {
+            background-color: var(--bg-card);
+            border: none; /* Modern modals don't need thick borders */
+            border-radius: 16px;
+            color: var(--text-main);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+        }
+        
+        .modal-title { font-weight: 700; }
+        
+        .modal-body { padding: 2rem; }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            background-color: #F9FAFB;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+        
+        /* Modal close button override for light background */
+        .btn-close-white { filter: invert(1) grayscale(100%) brightness(50%) !important; }
+
+        .form-control, .form-select {
+            background-color: #FFFFFF;
+            border: 1px solid #D1D5DB;
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #FFFFFF;
+            border-color: var(--accent-primary);
+            color: var(--text-main);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+        }
+        
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main) !important;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0.5rem 1.2rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-primary) !important;
+            border: 1px solid var(--accent-primary) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 2px 4px rgba(46, 125, 50, 0.2);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-hover) !important;
+            border-color: var(--accent-hover) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 6px rgba(46, 125, 50, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #DC2626 !important;
+            border: 1px solid #DC2626 !important;
+            color: #FFFFFF !important;
+        }
+        
+        .btn-outline-primary {
+            color: var(--accent-primary) !important;
+            border-color: rgba(46, 125, 50, 0.3) !important;
+        }
+        .btn-outline-primary:hover {
+            background-color: rgba(46, 125, 50, 0.05) !important;
+            color: var(--accent-hover) !important;
+            border-color: var(--accent-primary) !important;
+        }
+        
+        /* Action buttons in tables specific to the Manager views which were transparent white */
+        .btn-outline-light { border-color: transparent !important; background: transparent; }
+        .btn-outline-light.text-primary { color: var(--accent-primary) !important; }
+        .btn-outline-light.text-primary:hover { background-color: rgba(46, 125, 50, 0.1); color: var(--accent-hover) !important; }
+        .btn-outline-light.text-danger:hover { background-color: rgba(220, 38, 38, 0.1); }
+        
+        /* Overriding specific bg-gradient/opacity badges in forms/tables */
+        .bg-opacity-10 { opacity: 1 !important; }
+        .badge.bg-success { background-color: #DEF7EC !important; color: #03543F !important; border: 1px solid #84E1BC !important; }
+        .badge.bg-danger { background-color: #FDE8E8 !important; color: #9B1C1C !important; border: 1px solid #F8B4B4 !important; }
+        .badge.bg-primary { background-color: #E1EFFE !important; color: #1E429F !important; border: 1px solid #A4CAFE !important; }
+
+        /* General Badge for Table items */
+        td .badge {
+            background-color: #F3F4F6 !important;
+            color: #374151 !important;
+            border: 1px solid #D1D5DB !important;
+            padding: 0.4rem 0.6rem;
+            font-weight: 500;
+        }
+        
+        .text-primary { color: var(--accent-primary) !important; }
+    </style>
+</head>
+<body>
+    <!-- ========== FALLING LEAVES BACKGROUND ========== -->
+    <div class="leaf-background"></div>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h3><i class="fa-solid fa-mug-hot me-2"></i>PolyCafe</h3>
+        </div>
+        
+        <div class="nav-menu">
+            @{
+                var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+            }
+            <div class="nav-item">
+                <a href="~/Manager/Dashboard" class="nav-link @(currentAction == "Dashboard" ? "active" : "")">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="~/Manager/Categories" class="nav-link @(currentAction == "Categories" ? "active" : "")">
+                    <i class="fa-solid fa-layer-group"></i> Categories
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="~/Manager/Drinks" class="nav-link @(currentAction == "Drinks" ? "active" : "")">
+                    <i class="fa-solid fa-coffee"></i> Drinks
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="~/Manager/Toppings" class="nav-link @(currentAction == "Toppings" ? "active" : "")">
+                    <i class="fa-solid fa-ice-cream"></i> Toppings
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="~/Manager/Employees" class="nav-link @(currentAction == "Employees" ? "active" : "")">
+                    <i class="fa-solid fa-users"></i> Employees
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="~/Manager/Reports" class="nav-link @(currentAction == "Reports" ? "active" : "")">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Reports
+                </a>
+            </div>
+        </div>
+
+        <div class="user-profile">
+            <div class="avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div style="flex-grow: 1;">
+                <h6 class="mb-0" style="font-size: 0.9rem; font-weight: 600;">@Context.Session.GetString("FullName")</h6>
+                <small class="text-muted">Manager</small>
+            </div>
+            <a href="~/Auth/Logout" class="text-muted text-decoration-none" title="Logout">
+                <i class="fa-solid fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <h2 class="page-title">@ViewData["Title"]</h2>
+            <div>
+                <span class="badge bg-primary px-3 py-2 rounded-pill">
+                    <i class="fa-regular fa-clock me-1"></i> @DateTime.Now.ToString("dd MMM yyyy")
+                </span>
+            </div>
+        </div>
+
+        @RenderBody()
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/leaf-animation.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

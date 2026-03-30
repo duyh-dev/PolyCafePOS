@@ -1,0 +1,462 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PolyCafe POS - Đăng nhập</title>
+    <meta name="description" content="PolyCafe POS - Đăng nhập hệ thống bán hàng" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ========================================
+           LOGIN PAGE — Modern Cafe POS Theme
+           ======================================== */
+        :root {
+            --primary: #048C73;
+            --primary-dark: #036B58;
+            --primary-light: rgba(4, 140, 115, 0.08);
+            --bg-main: #F7F9F8;
+            --bg-card: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --text-light: #94A3B8;
+            --border: #E5E7EB;
+            --danger: #EF4444;
+            --danger-bg: rgba(239, 68, 68, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle decorative background elements */
+        .bg-decor {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.5;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-decor-1 {
+            width: 500px;
+            height: 500px;
+            background: rgba(4, 140, 115, 0.06);
+            top: -200px;
+            right: -100px;
+            filter: blur(60px);
+        }
+
+        .bg-decor-2 {
+            width: 400px;
+            height: 400px;
+            background: rgba(4, 140, 115, 0.04);
+            bottom: -150px;
+            left: -100px;
+            filter: blur(60px);
+        }
+
+        /* Login Card */
+        .login-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            animation: cardFadeIn 0.5s ease-out;
+        }
+
+        @@keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Brand / Logo */
+        .brand-area {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .brand-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--primary-light);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .brand-icon i {
+            font-size: 1.75rem;
+            color: var(--primary);
+        }
+
+        .brand-area h1 {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            letter-spacing: -0.03em;
+            margin: 0 0 0.35rem 0;
+        }
+
+        .brand-area p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* Form Labels */
+        .form-label {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+
+        /* Input Group */
+        .input-wrap {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .input-wrap .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .input-wrap .form-control {
+            padding: 0.8rem 1rem 0.8rem 2.75rem;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-wrap .form-control::placeholder {
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        .input-wrap .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(4, 140, 115, 0.12);
+            outline: none;
+        }
+
+        /* Password Toggle */
+        .toggle-password {
+            position: absolute;
+            right: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 0.9rem;
+            z-index: 2;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: var(--text-muted);
+        }
+
+        /* Login Button */
+        .btn-login {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-login:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 16px rgba(4, 140, 115, 0.3);
+        }
+
+        .btn-login:active {
+            transform: scale(0.98);
+        }
+
+        /* Error Alert */
+        .alert-error {
+            background: var(--danger-bg);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            color: #DC2626;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .alert-error i {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.18);
+            color: #15803D;
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .forgot-password-box {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .forgot-password-link {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .forgot-password-link:hover {
+            color: var(--primary-dark);
+        }
+
+        .btn-outline-reset {
+            width: 100%;
+            padding: 0.8rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-reset:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* Footer Text */
+        .login-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .login-footer p {
+            font-size: 0.78rem;
+            color: var(--text-light);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .login-footer .brand-text {
+            color: var(--primary);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <!-- Subtle background decorations -->
+    <div class="bg-decor bg-decor-1"></div>
+    <div class="bg-decor bg-decor-2"></div>
+
+    <div class="login-card">
+        <!-- Brand Area -->
+        <div class="brand-area">
+            <div class="brand-icon">
+                <i class="fa-solid fa-mug-hot"></i>
+            </div>
+            <h1>PolyCafe POS</h1>
+            <p>Đăng nhập để bắt đầu ca làm việc</p>
+        </div>
+
+        <!-- Error Message -->
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert-error">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>@ViewBag.Error</span>
+            </div>
+        }
+
+        @if (ViewBag.Success != null)
+        {
+            <div class="alert-success">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>@ViewBag.Success</span>
+            </div>
+        }
+
+        <!-- Login Form -->
+        <form asp-action="Login" method="post">
+            <div>
+                <label for="username" class="form-label">Tên đăng nhập</label>
+                <div class="input-wrap">
+                    <i class="fa-regular fa-user input-icon"></i>
+                    <input type="text"
+                           class="form-control"
+                           id="username"
+                           name="username"
+                           required
+                           autocomplete="username"
+                           placeholder="Nhập tên đăng nhập">
+                </div>
+            </div>
+
+            <div>
+                <label for="password" class="form-label">Mật khẩu</label>
+                <div class="input-wrap">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password"
+                           class="form-control"
+                           id="password"
+                           name="password"
+                           required
+                           autocomplete="current-password"
+                           placeholder="Nhập mật khẩu">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()" title="Hiện/ẩn mật khẩu">
+                        <i class="fa-regular fa-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Đăng nhập
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="forgot-password-box">
+            <a class="forgot-password-link" data-bs-toggle="collapse" href="#forgotPasswordForm" role="button" aria-expanded="false" aria-controls="forgotPasswordForm">
+                Quên mật khẩu?
+            </a>
+
+            <div class="collapse mt-3" id="forgotPasswordForm">
+                <form asp-action="ForgotPassword" method="post">
+                    @Html.AntiForgeryToken()
+                    <div>
+                        <label for="forgotUsername" class="form-label">Tên đăng nhập nhân viên</label>
+                        <div class="input-wrap">
+                            <i class="fa-regular fa-user input-icon"></i>
+                            <input type="text"
+                                   class="form-control"
+                                   id="forgotUsername"
+                                   name="username"
+                                   required
+                                   placeholder="Nhập tên đăng nhập">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="forgotEmail" class="form-label">Email nhân viên</label>
+                        <div class="input-wrap">
+                            <i class="fa-regular fa-envelope input-icon"></i>
+                            <input type="email"
+                                   class="form-control"
+                                   id="forgotEmail"
+                                   name="email"
+                                   required
+                                   placeholder="Nhập email đã đăng ký">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-outline-reset">
+                        Cấp lại mật khẩu và gửi email
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="login-footer">
+            <p>Hệ thống POS — <span class="brand-text">PolyCafe</span></p>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
+        // Auto-focus username field
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+        });
+    </script>
+</body>
+</html>

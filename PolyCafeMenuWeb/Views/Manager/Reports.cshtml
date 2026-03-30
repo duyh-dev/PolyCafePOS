@@ -1,0 +1,135 @@
+@model IEnumerable<PolyCafeMenuWeb.Models.Order>
+
+@{
+    ViewData["Title"] = "Sales Reports";
+    Layout = "~/Views/Manager/_Layout.cshtml";
+    DateTime startDate = ViewBag.StartDate;
+    DateTime endDate = ViewBag.EndDate;
+}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="glass-card stat-card" style="border-left: 4px solid #3b82f6;">
+            <div class="stat-icon blue"><i class="fa-solid fa-coins"></i></div>
+            <div class="stat-details">
+                <h4>Period Revenue (Completed)</h4>
+                <p>@String.Format("{0:N0}", ViewBag.TotalRevenue) ₫</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card stat-card" style="border-left: 4px solid #10b981;">
+            <div class="stat-icon green"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="stat-details">
+                <h4>Completed Orders</h4>
+                <p>@ViewBag.CompletedOrders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="glass-card stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="stat-icon orange"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-details">
+                <h4>Pending Orders</h4>
+                <p>@ViewBag.PendingOrders</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-card mb-4">
+    <form asp-action="Reports" method="get">
+        <div class="d-flex flex-wrap gap-3 align-items-end">
+            <div style="min-width: 200px; flex: 1;">
+                <label class="form-label text-muted">Start Date</label>
+                <input type="date" class="form-control bg-dark border-light text-white" name="startDate" value="@startDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div style="min-width: 200px; flex: 1;">
+                <label class="form-label text-muted">End Date</label>
+                <input type="date" class="form-control bg-dark border-light text-white" name="endDate" value="@endDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="d-flex gap-2" style="padding-bottom: 1px;">
+                <button type="submit" class="btn btn-primary px-4" style="height: 38px;"><i class="fa-solid fa-filter me-2"></i> Filter Data</button>
+                <a href="@Url.Action("ExportExcel", "Manager", new { startDate = startDate.ToString("yyyy-MM-dd"), endDate = endDate.ToString("yyyy-MM-dd") })" class="btn btn-success px-4" style="height: 38px; line-height: 26px;">
+                    <i class="fa-solid fa-file-excel me-2"></i> Xuất Excel
+                </a>
+                <button type="button" class="btn btn-outline-light" style="height: 38px;" onclick="window.print()"><i class="fa-solid fa-print"></i></button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="glass-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">Order History Archive</h5>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Date & Time</th>
+                    <th>Cashier</th>
+                    <th>Items</th>
+                    <th>Total Base</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td class="fw-bold text-primary">@order.OrderCode</td>
+                        <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-muted"><i class="fa-regular fa-user small"></i> @(order.Employee?.FullName ?? "Unknown")</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#items-@order.OrderID">
+                                @order.OrderDetails.Count items <i class="fa-solid fa-chevron-down ms-1 small"></i>
+                            </button>
+                        </td>
+                        <td class="fw-bold fs-6">@String.Format("{0:N0}", order.TotalAmount) ₫</td>
+                        <td>
+                            @switch(order.Status)
+                            {
+                                case "Completed": <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1"><i class="fa-solid fa-check me-1"></i> Completed</span> break;
+                                case "Pending": <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1"><i class="fa-regular fa-clock me-1"></i> Pending</span> break;
+                                case "Cancelled": <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1"><i class="fa-solid fa-xmark me-1"></i> Cancelled</span> break;
+                                default: <span class="badge bg-secondary">@order.Status</span> break;
+                            }
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="items-@order.OrderID">
+                        <td colspan="6" class="p-0 border-0">
+                            <div class="bg-dark bg-opacity-50 p-3 mx-2 mb-2 rounded border border-light border-opacity-10">
+                                <ul class="list-unstyled mb-0">
+                                    @foreach(var item in order.OrderDetails)
+                                    {
+                                        <li class="d-flex justify-content-between text-muted py-1 border-bottom border-light border-opacity-10 last-0">
+                                            <span>
+                                                <span class="text-white">@item.Quantity x</span> 
+                                                @item.DrinkNameSnapshot 
+                                                <span class="badge bg-secondary bg-opacity-25 text-light ms-1">Size @item.SizeSnapshot</span>
+                                            </span>
+                                            <span>@String.Format("{0:N0}", item.SubTotal) ₫</span>
+                                        </li>
+                                    }
+                                </ul>
+                                @if(!string.IsNullOrEmpty(order.Note))
+                                {
+                                    <div class="mt-2 text-warning small"><i class="fa-solid fa-note-sticky me-1"></i> Note: @order.Note</div>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if(!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No orders found in this period.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

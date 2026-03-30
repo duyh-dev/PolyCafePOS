@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PolyCafe POS</title>
+    <meta name="description" content="PolyCafe POS - Hệ thống bán hàng quán cà phê" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/leaf-animation.css" asp-append-version="true" />
+
+    <style>
+        /* ========================================
+           DESIGN TOKENS — Modern Cafe POS
+           ======================================== */
+        :root {
+            --primary: #048C73;
+            --primary-dark: #036B58;
+            --primary-light: rgba(4, 140, 115, 0.08);
+            --primary-lighter: rgba(4, 140, 115, 0.04);
+
+            --bg-main: #F7F9F8;
+            --bg-card: #FFFFFF;
+
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --text-light: #94A3B8;
+
+            --border: #E5E7EB;
+            --border-light: #F1F5F9;
+
+            --success: #10B981;
+            --success-bg: rgba(16, 185, 129, 0.08);
+            --danger: #EF4444;
+            --danger-bg: rgba(239, 68, 68, 0.08);
+            --warning: #F59E0B;
+            --warning-bg: rgba(245, 158, 11, 0.08);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+            /* Radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-pill: 50px;
+
+            /* Bootstrap overrides */
+            --bs-primary: #048C73;
+            --bs-primary-rgb: 4, 140, 115;
+        }
+
+        /* ========================================
+           BASE RESET & TYPOGRAPHY
+           ======================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            font-weight: 700;
+        }
+
+        /* ========================================
+           TOP NAVIGATION — Clean & Modern
+           ======================================== */
+        .pos-navbar {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--primary) !important;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.03em;
+        }
+
+        .navbar-brand i {
+            font-size: 1.3rem;
+        }
+
+        /* Nav Links */
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            transition: color 0.2s, background-color 0.2s;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .nav-links a.active {
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .nav-links a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* User Info */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-meta {
+            text-align: right;
+            line-height: 1.3;
+        }
+
+        .user-meta .user-name {
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: var(--text-main);
+        }
+
+        .user-meta .user-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .btn-logout {
+            color: var(--text-light);
+            background: none;
+            border: none;
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            transition: color 0.2s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .btn-logout:hover {
+            color: var(--danger);
+            background-color: var(--danger-bg);
+        }
+
+        /* ========================================
+           MAIN WORKSPACE
+           ======================================== */
+        .pos-workspace {
+            display: flex;
+            flex-grow: 1;
+            height: calc(100vh - 64px);
+            overflow: hidden;
+            background-color: var(--bg-main);
+        }
+
+        /* ========================================
+           GLOBAL BUTTON OVERRIDES
+           ======================================== */
+        .btn-primary, .bg-primary {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #FFFFFF !important;
+            box-shadow: none;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--primary-dark) !important;
+            border-color: var(--primary-dark) !important;
+            box-shadow: 0 4px 12px rgba(4, 140, 115, 0.25);
+        }
+
+        .btn-primary:active {
+            background-color: var(--primary-dark) !important;
+            transform: scale(0.98);
+        }
+
+        .text-primary {
+            color: var(--primary) !important;
+        }
+
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        /* ========================================
+           CUSTOM SCROLLBAR — Minimal
+           ======================================== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-light);
+        }
+
+        /* ========================================
+           MODAL OVERRIDES — Clean White Theme
+           ======================================== */
+        .modal-content.pos-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.3;
+        }
+
+        .pos-modal .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .pos-modal .modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .pos-modal .btn-close {
+            opacity: 0.5;
+        }
+
+        .pos-modal .btn-close:hover {
+            opacity: 1;
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- ========== FALLING LEAVES BACKGROUND ========== -->
+    <div class="leaf-background"></div>
+
+    <!-- ========== TOP NAVIGATION ========== -->
+    <header class="pos-navbar">
+        <a href="~/POS/Index" class="navbar-brand">
+            <i class="fa-solid fa-mug-hot"></i> PolyCafe
+        </a>
+
+        <div class="nav-links">
+            @{ var action = ViewContext.RouteData.Values["Action"]?.ToString(); }
+            <a href="~/POS/Index" class="@(action == "Index" ? "active" : "")">
+                <i class="fa-solid fa-cash-register"></i> Bán hàng
+            </a>
+            <a href="~/POS/History" class="@(action == "History" ? "active" : "")">
+                <i class="fa-solid fa-receipt"></i> Lịch sử
+            </a>
+        </div>
+
+        <div class="user-info">
+            <div class="user-meta">
+                <div class="user-name">@Context.Session.GetString("FullName")</div>
+                <div class="user-role">Thu ngân</div>
+            </div>
+            <div class="avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <a href="~/Auth/Logout" class="btn-logout" title="Đăng xuất">
+                <i class="fa-solid fa-right-from-bracket fs-5"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main role="main" class="pos-workspace">
+        @RenderBody()
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/leaf-animation.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
