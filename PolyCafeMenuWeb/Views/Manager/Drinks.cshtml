@@ -14,6 +14,17 @@
         </button>
     </div>
 
+    <!-- Search Bar -->
+    <div class="input-group mb-3">
+        <span class="input-group-text bg-dark border-light">
+            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+        </span>
+        <input type="text" class="form-control bg-dark border-light text-white" id="searchInput" placeholder="Tìm kiếm đồ uống theo tên..." oninput="filterDrinks()">
+        <button class="btn btn-outline-secondary border-light" type="button" id="clearSearchBtn" onclick="clearSearch()" style="display: none;">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
@@ -27,7 +38,7 @@
                     <th width="150" class="text-end">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="drinksTableBody">
                 @foreach (var item in Model)
                 {
                     <tr>
@@ -252,6 +263,34 @@
             
             var modal = new bootstrap.Modal(document.getElementById('drinkModal'));
             modal.show();
+        }
+
+        // Search functionality
+        function filterDrinks() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const tbody = document.getElementById('drinksTableBody');
+            const rows = tbody.getElementsByTagName('tr');
+
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+
+            for (let i = 0; i < rows.length; i++) {
+                const drinkName = rows[i].getElementsByTagName('td')[2]; // Drink Name column
+                if (drinkName) {
+                    const textValue = drinkName.textContent || drinkName.innerText;
+                    if (textValue.toLowerCase().indexOf(query) > -1) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            filterDrinks(); // This will show all rows since query is empty
         }
     </script>
 }
