@@ -13,7 +13,15 @@
             <i class="fa-solid fa-plus me-2"></i> Add Drink
         </button>
     </div>
-
+    <div class="mb-3 d-flex gap-2">
+        <select class="form-select bg-dark text-white border-light" id="categoryFilter" onchange="filterDrinks()" style="width: 180px;">
+            <option value="">All</option>
+            @foreach (var cat in categories)
+            {
+                <option value="@cat.CategoryName">@cat.CategoryName</option>
+            }
+        </select>
+    </div>
     <!-- Search Bar -->
     <div class="input-group mb-3">
         <span class="input-group-text bg-dark border-light">
@@ -268,6 +276,7 @@
         // Search functionality
         function filterDrinks() {
             const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
             const clearBtn = document.getElementById('clearSearchBtn');
             const tbody = document.getElementById('drinksTableBody');
             const rows = tbody.getElementsByTagName('tr');
@@ -275,10 +284,17 @@
             clearBtn.style.display = query.length > 0 ? 'block' : 'none';
 
             for (let i = 0; i < rows.length; i++) {
-                const drinkName = rows[i].getElementsByTagName('td')[2]; // Drink Name column
-                if (drinkName) {
-                    const textValue = drinkName.textContent || drinkName.innerText;
-                    if (textValue.toLowerCase().indexOf(query) > -1) {
+                const nameCol = rows[i].getElementsByTagName('td')[2]; // Drink Name
+                const categoryCol = rows[i].getElementsByTagName('td')[3]; // Category
+
+                if (nameCol && categoryCol) {
+                    const nameText = nameCol.textContent.toLowerCase();
+                    const categoryText = categoryCol.textContent.trim();
+
+                    const matchSearch = nameText.includes(query);
+                    const matchCategory = category === "" || categoryText === category;
+
+                    if (matchSearch && matchCategory) {
                         rows[i].style.display = '';
                     } else {
                         rows[i].style.display = 'none';
@@ -289,8 +305,9 @@
 
         function clearSearch() {
             document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
             document.getElementById('clearSearchBtn').style.display = 'none';
-            filterDrinks(); // This will show all rows since query is empty
+            filterDrinks();
         }
     </script>
 }
