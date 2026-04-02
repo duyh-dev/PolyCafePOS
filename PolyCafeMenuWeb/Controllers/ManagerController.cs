@@ -17,44 +17,48 @@ namespace PolyCafeMenuWeb.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Dashboard()
+        public async Task<IActionResult> Dashboard(DateTime? selectedDate)
         {
-            var today = DateTime.Today;
-            var startOfMonth = new DateTime(today.Year, today.Month, 1);
+            var dashboardDate = selectedDate?.Date ?? DateTime.Today;
+            var nextDate = dashboardDate.AddDays(1);
+            var startOfMonth = new DateTime(dashboardDate.Year, dashboardDate.Month, 1);
+            var startOfNextMonth = startOfMonth.AddMonths(1);
 
-            // Today's revenue
-            var todayRevenue = await _context.Orders
-                .Where(o => o.OrderDate.Date == today && o.Status == "Completed")
+            // Selected day's revenue
+            var selectedDateRevenue = await _context.Orders
+                .Where(o => o.OrderDate >= dashboardDate && o.OrderDate < nextDate && o.Status == "Completed")
                 .SumAsync(o => o.TotalAmount);
 
-            // Month's revenue
+            // Selected date's month revenue
             var monthRevenue = await _context.Orders
-                .Where(o => o.OrderDate >= startOfMonth && o.Status == "Completed")
+                .Where(o => o.OrderDate >= startOfMonth && o.OrderDate < startOfNextMonth && o.Status == "Completed")
                 .SumAsync(o => o.TotalAmount);
 
-            // Total Orders today
-            var totalOrdersToday = await _context.Orders
-                .CountAsync(o => o.OrderDate.Date == today);
+            // Total orders on selected date
+            var totalOrdersOnSelectedDate = await _context.Orders
+                .CountAsync(o => o.OrderDate >= dashboardDate && o.OrderDate < nextDate);
 
             // Total Drinks
             var totalDrinks = await _context.Drinks.CountAsync(d => d.IsActive);
 
-            // Chart Data (Last 7 days revenue)
-            var last7Days = Enumerable.Range(0, 7).Select(i => today.AddDays(-i)).Reverse().ToList();
+            // Chart data for the 7-day period ending on selected date
+            var last7Days = Enumerable.Range(0, 7).Select(i => dashboardDate.AddDays(-i)).Reverse().ToList();
             var chartData = new List<object>();
 
             foreach (var day in last7Days)
             {
+                var dayEnd = day.AddDays(1);
                 var revenue = await _context.Orders
-                    .Where(o => o.OrderDate.Date == day.Date && o.Status == "Completed")
+                    .Where(o => o.OrderDate >= day && o.OrderDate < dayEnd && o.Status == "Completed")
                     .SumAsync(o => o.TotalAmount);
 
                 chartData.Add(new { Date = day.ToString("dd/MM"), Revenue = revenue });
             }
 
-            ViewBag.TodayRevenue = todayRevenue;
+            ViewBag.SelectedDate = dashboardDate;
+            ViewBag.SelectedDateRevenue = selectedDateRevenue;
             ViewBag.MonthRevenue = monthRevenue;
-            ViewBag.TotalOrdersToday = totalOrdersToday;
+            ViewBag.TotalOrdersOnSelectedDate = totalOrdersOnSelectedDate;
             ViewBag.TotalDrinks = totalDrinks;
             ViewBag.ChartData = chartData;
 

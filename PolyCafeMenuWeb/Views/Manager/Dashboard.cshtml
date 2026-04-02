@@ -1,15 +1,34 @@
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Manager/_Layout.cshtml";
+    var selectedDate = ((DateTime)ViewBag.SelectedDate).ToString("yyyy-MM-dd");
+    var selectedDateDisplay = ((DateTime)ViewBag.SelectedDate).ToString("dd/MM/yyyy");
 }
+
+<div class="glass-card mb-4">
+    <form method="get" asp-action="Dashboard" class="row g-3 align-items-end">
+        <div class="col-md-4 col-lg-3">
+            <label for="selectedDate" class="form-label fw-semibold">Chọn ngày thống kê</label>
+            <input type="date" id="selectedDate" name="selectedDate" value="@selectedDate" class="form-control" />
+        </div>
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-primary px-4">
+                <i class="fa-solid fa-filter me-2"></i>Xem thống kê
+            </button>
+        </div>
+        <div class="col-md">
+            <div class="text-muted small">Đang hiển thị dữ liệu cho ngày <strong>@selectedDateDisplay</strong>.</div>
+        </div>
+    </form>
+</div>
 
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="glass-card stat-card">
             <div class="stat-icon blue"><i class="fa-solid fa-dollar-sign"></i></div>
             <div class="stat-details">
-                <h4>Today's Revenue</h4>
-                <p>@String.Format("{0:N0}", ViewBag.TodayRevenue)₫</p>
+                <h4>Doanh thu ngày chọn</h4>
+                <p>@String.Format("{0:N0}", ViewBag.SelectedDateRevenue)₫</p>
             </div>
         </div>
     </div>
@@ -17,7 +36,7 @@
         <div class="glass-card stat-card">
             <div class="stat-icon green"><i class="fa-solid fa-chart-line"></i></div>
             <div class="stat-details">
-                <h4>Monthly Revenue</h4>
+                <h4>Doanh thu trong tháng</h4>
                 <p>@String.Format("{0:N0}", ViewBag.MonthRevenue)₫</p>
             </div>
         </div>
@@ -26,8 +45,8 @@
         <div class="glass-card stat-card">
             <div class="stat-icon orange"><i class="fa-solid fa-receipt"></i></div>
             <div class="stat-details">
-                <h4>Today's Orders</h4>
-                <p>@ViewBag.TotalOrdersToday</p>
+                <h4>Đơn trong ngày chọn</h4>
+                <p>@ViewBag.TotalOrdersOnSelectedDate</p>
             </div>
         </div>
     </div>
@@ -35,7 +54,7 @@
         <div class="glass-card stat-card">
             <div class="stat-icon purple"><i class="fa-solid fa-coffee"></i></div>
             <div class="stat-details">
-                <h4>Total Drinks</h4>
+                <h4>Tổng món</h4>
                 <p>@ViewBag.TotalDrinks</p>
             </div>
         </div>
@@ -46,7 +65,7 @@
     <div class="col-lg-8">
         <div class="glass-card">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0 font-weight-bold">Revenue Overview (Last 7 Days)</h5>
+                <h5 class="mb-0 font-weight-bold">Doanh thu 7 ngày gần nhất đến @selectedDateDisplay</h5>
             </div>
             <div style="height: 350px;">
                 <canvas id="revenueChart"></canvas>
