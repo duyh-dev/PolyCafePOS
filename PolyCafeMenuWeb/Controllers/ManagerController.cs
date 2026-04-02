@@ -17,50 +17,86 @@ namespace PolyCafeMenuWeb.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Dashboard(DateTime? selectedDate)
+        public async Task<IActionResult> Dashboard(DateTime? startDate, DateTime? endDate)
         {
-            var dashboardDate = selectedDate?.Date ?? DateTime.Today;
-            var nextDate = dashboardDate.AddDays(1);
-            var startOfMonth = new DateTime(dashboardDate.Year, dashboardDate.Month, 1);
-            var startOfNextMonth = startOfMonth.AddMonths(1);
+            // ===== DEFAULT DATE =====
+            startDate ??= DateTime.Today.AddDays(-6);
+            endDate ??= DateTime.Today;
 
-            // Selected day's revenue
-            var selectedDateRevenue = await _context.Orders
-                .Where(o => o.OrderDate >= dashboardDate && o.OrderDate < nextDate && o.Status == "Completed")
+            var start = startDate.Value.Date;
+            var end = endDate.Value.Date.AddDays(1); // để lấy hết ngày cuối
+
+            // ===== DOANH THU THEO KHOẢNG =====
+            var rangeRevenue = await _context.Orders
+                .Where(o => o.OrderDate >= start && o.OrderDate < end && o.Status == "Completed")
                 .SumAsync(o => o.TotalAmount);
 
-            // Selected date's month revenue
+            // ===== TỔNG ĐƠN =====
+            var totalOrders = await _context.Orders
+                .CountAsync(o => o.OrderDate >= start && o.OrderDate < end);
+
+            // ===== DOANH THU THÁNG (lấy theo tháng của startDate) =====
+            var startOfMonth = new DateTime(start.Year, start.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1);
+
             var monthRevenue = await _context.Orders
-                .Where(o => o.OrderDate >= startOfMonth && o.OrderDate < startOfNextMonth && o.Status == "Completed")
+                .Where(o => o.OrderDate >= startOfMonth && o.OrderDate < endOfMonth && o.Status == "Completed")
                 .SumAsync(o => o.TotalAmount);
 
-            // Total orders on selected date
-            var totalOrdersOnSelectedDate = await _context.Orders
-                .CountAsync(o => o.OrderDate >= dashboardDate && o.OrderDate < nextDate);
-
-            // Total Drinks
+            // ===== TOTAL DRINK =====
             var totalDrinks = await _context.Drinks.CountAsync(d => d.IsActive);
 
-            // Chart data for the 7-day period ending on selected date
-            var last7Days = Enumerable.Range(0, 7).Select(i => dashboardDate.AddDays(-i)).Reverse().ToList();
+            // ===== CHART (THEO RANGE LUÔN) =====
+            var chartRaw = await _context.Orders
+                .Where(o => o.OrderDate >= start && o.OrderDate < end && o.Status == "Completed")
+                .GroupBy(o => o.OrderDate.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    Revenue = g.Sum(x => x.TotalAmount)
+                })
+                .ToListAsync();
+
+            // đảm bảo đủ ngày (không bị thiếu ngày không có đơn)
             var chartData = new List<object>();
-
-            foreach (var day in last7Days)
+            for (var date = start; date < end; date = date.AddDays(1))
             {
-                var dayEnd = day.AddDays(1);
-                var revenue = await _context.Orders
-                    .Where(o => o.OrderDate >= day && o.OrderDate < dayEnd && o.Status == "Completed")
-                    .SumAsync(o => o.TotalAmount);
-
-                chartData.Add(new { Date = day.ToString("dd/MM"), Revenue = revenue });
+                var found = chartRaw.FirstOrDefault(x => x.Date == date);
+                chartData.Add(new
+                {
+                    Date = date.ToString("dd/MM"),
+                    Revenue = found != null ? found.Revenue : 0
+                });
             }
 
-            ViewBag.SelectedDate = dashboardDate;
-            ViewBag.SelectedDateRevenue = selectedDateRevenue;
+            // ===== TOP 5 =====
+            var topDrinks = await _context.OrderDetails
+                .Where(od => od.Order != null &&
+                             od.Order.OrderDate >= start &&
+                             od.Order.OrderDate < end &&
+                             od.Order.Status == "Completed")
+                .GroupBy(od => od.DrinkNameSnapshot)
+                .Select(g => new
+                {
+                    DrinkName = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity)
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .Take(5)
+                .ToListAsync();
+
+            // ===== VIEWBAG =====
+            ViewBag.StartDate = start.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = endDate.Value.ToString("yyyy-MM-dd");
+
+            ViewBag.RangeRevenue = rangeRevenue;
+            ViewBag.SelectedDateRevenue = rangeRevenue; // dùng chung cho UI cũ
             ViewBag.MonthRevenue = monthRevenue;
-            ViewBag.TotalOrdersOnSelectedDate = totalOrdersOnSelectedDate;
+            ViewBag.TotalOrdersOnSelectedDate = totalOrders;
             ViewBag.TotalDrinks = totalDrinks;
+
             ViewBag.ChartData = chartData;
+            ViewBag.TopDrinks = topDrinks;
 
             return View();
         }

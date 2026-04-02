@@ -1,56 +1,75 @@
 @{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Manager/_Layout.cshtml";
-    var selectedDate = ((DateTime)ViewBag.SelectedDate).ToString("yyyy-MM-dd");
-    var selectedDateDisplay = ((DateTime)ViewBag.SelectedDate).ToString("dd/MM/yyyy");
 }
 
+<!-- FILTER -->
 <div class="glass-card mb-4">
     <form method="get" asp-action="Dashboard" class="row g-3 align-items-end">
-        <div class="col-md-4 col-lg-3">
-            <label for="selectedDate" class="form-label fw-semibold">Chọn ngày thống kê</label>
-            <input type="date" id="selectedDate" name="selectedDate" value="@selectedDate" class="form-control" />
+
+        <div class="col">
+            <label class="form-label">Từ ngày</label>
+            <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
         </div>
-        <div class="col-md-auto">
-            <button type="submit" class="btn btn-primary px-4">
+
+        <div class="col">
+            <label class="form-label">Đến ngày</label>
+            <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+        </div>
+
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary px-4 w-100">
                 <i class="fa-solid fa-filter me-2"></i>Xem thống kê
             </button>
         </div>
-        <div class="col-md">
-            <div class="text-muted small">Đang hiển thị dữ liệu cho ngày <strong>@selectedDateDisplay</strong>.</div>
-        </div>
+
     </form>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-3">
+<!-- STAT CARDS -->
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3 mb-4">
+
+    <div class="col">
+        <div class="glass-card stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-coins"></i></div>
+            <div class="stat-details">
+                <h4>Doanh thu khoảng</h4>
+                <p>@String.Format("{0:N0}", ViewBag.RangeRevenue)₫</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
         <div class="glass-card stat-card">
             <div class="stat-icon blue"><i class="fa-solid fa-dollar-sign"></i></div>
             <div class="stat-details">
-                <h4>Doanh thu ngày chọn</h4>
+                <h4>Doanh thu (khoảng chọn)</h4>
                 <p>@String.Format("{0:N0}", ViewBag.SelectedDateRevenue)₫</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+
+    <div class="col">
         <div class="glass-card stat-card">
             <div class="stat-icon green"><i class="fa-solid fa-chart-line"></i></div>
             <div class="stat-details">
-                <h4>Doanh thu trong tháng</h4>
+                <h4>Doanh thu tháng</h4>
                 <p>@String.Format("{0:N0}", ViewBag.MonthRevenue)₫</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+
+    <div class="col">
         <div class="glass-card stat-card">
             <div class="stat-icon orange"><i class="fa-solid fa-receipt"></i></div>
             <div class="stat-details">
-                <h4>Đơn trong ngày chọn</h4>
+                <h4>Tổng đơn</h4>
                 <p>@ViewBag.TotalOrdersOnSelectedDate</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+
+    <div class="col">
         <div class="glass-card stat-card">
             <div class="stat-icon purple"><i class="fa-solid fa-coffee"></i></div>
             <div class="stat-details">
@@ -59,50 +78,109 @@
             </div>
         </div>
     </div>
+
 </div>
 
+<!-- CHART + QUICK ACTION -->
 <div class="row">
+
+    <!-- CHART -->
     <div class="col-lg-8">
         <div class="glass-card">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="mb-0 font-weight-bold">Doanh thu 7 ngày gần nhất đến @selectedDateDisplay</h5>
+                <h5>Doanh thu từ @ViewBag.StartDate đến @ViewBag.EndDate</h5>
             </div>
             <div style="height: 350px;">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
     </div>
+
+    <!-- QUICK ACTION -->
     <div class="col-lg-4">
         <div class="glass-card h-100">
             <h5 class="mb-4">Quick Actions</h5>
+
             <div class="d-grid gap-3">
-                <a href="~/Manager/Drinks" class="btn btn-outline-primary text-start py-3 rounded-3" style="border-color: rgba(59,130,246,0.3); color: #94a3b8;">
+                <a href="~/Manager/Drinks" class="btn btn-outline-primary text-start py-3 rounded-3">
                     <i class="fa-solid fa-plus text-primary me-2"></i> Add New Drink
                 </a>
-                <a href="~/Manager/Employees" class="btn btn-outline-primary text-start py-3 rounded-3" style="border-color: rgba(59,130,246,0.3); color: #94a3b8;">
+
+                <a href="~/Manager/Employees" class="btn btn-outline-primary text-start py-3 rounded-3">
                     <i class="fa-solid fa-user-plus text-primary me-2"></i> Add Employee
                 </a>
-                <a href="~/Manager/Reports" class="btn btn-outline-primary text-start py-3 rounded-3" style="border-color: rgba(59,130,246,0.3); color: #94a3b8;">
+
+                <a href="~/Manager/Reports" class="btn btn-outline-primary text-start py-3 rounded-3">
                     <i class="fa-solid fa-download text-primary me-2"></i> Export Report
                 </a>
             </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- TOP 5 -->
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="glass-card">
+            <h5 class="mb-4">Top 5 thức uống bán chạy</h5>
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tên thức uống</th>
+                        <th>Số lượng bán</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var topDrinks = ViewBag.TopDrinks as IEnumerable<dynamic>;
+                        int index = 1;
+                    }
+
+                    @if (topDrinks != null && topDrinks.Any())
+                    {
+                        foreach (var item in topDrinks)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td>@item.DrinkName</td>
+                                <td>@item.TotalQuantity</td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                Không có dữ liệu
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
-        $(document).ready(function() {
-            var rawChartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartData));
-            
+        document.addEventListener("DOMContentLoaded", function () {
+
+            var rawChartData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.ChartData ?? new List<object>()));
+
             var labels = rawChartData.map(item => item.Date);
             var data = rawChartData.map(item => item.Revenue);
 
             var ctx = document.getElementById('revenueChart').getContext('2d');
-            
-            // Create gradient
+
             var gradient = ctx.createLinearGradient(0, 0, 0, 350);
-            gradient.addColorStop(0, 'rgba(46, 125, 50, 0.4)'); /* Green gradient */
+            gradient.addColorStop(0, 'rgba(46, 125, 50, 0.4)');
             gradient.addColorStop(1, 'rgba(46, 125, 50, 0.0)');
 
             new Chart(ctx, {
@@ -110,73 +188,21 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Revenue (VND)',
+                        label: 'Doanh thu (VNĐ)',
                         data: data,
                         backgroundColor: gradient,
-                        borderColor: '#2E7D32', /* Primary Green */
+                        borderColor: '#2E7D32',
                         borderWidth: 3,
-                        pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: '#2E7D32',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
                         fill: true,
                         tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#1F2937', /* Dark gray tooltip */
-                            titleColor: '#E5E7EB',
-                            bodyColor: '#fff',
-                            bodyFont: { weight: 'bold' },
-                            padding: 12,
-                            borderColor: 'rgba(0,0,0,0.1)',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y.toLocaleString() + ' ₫';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)', /* Subtle dark grid line for light mode */
-                                borderColor: 'transparent'
-                            },
-                            ticks: {
-                                color: '#6B7280' /* Muted Gray */
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)',
-                                borderColor: 'transparent'
-                            },
-                            ticks: {
-                                color: '#6B7280',
-                                callback: function(value) {
-                                    if (value >= 1000000) {
-                                        return (value / 1000000) + 'M';
-                                    } else if (value >= 1000) {
-                                        return (value / 1000) + 'K';
-                                    }
-                                    return value;
-                                }
-                            }
-                        }
-                    }
+                    maintainAspectRatio: false
                 }
             });
+
         });
     </script>
 }
